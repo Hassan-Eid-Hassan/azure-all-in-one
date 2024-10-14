@@ -1,0 +1,292 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "14680538243429534307"
+    }
+  },
+  "parameters": {
+    "projectName": {
+      "type": "string",
+      "defaultValue": "DFP",
+      "metadata": {
+        "description": "Specifies a project name that is used for generating resource names."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "depi01",
+      "metadata": {
+        "description": "Specifies the virtual machine administrator username."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Specifies the virtual machine administrator password."
+      }
+    },
+    "vmNumbers": {
+      "type": "int",
+      "defaultValue": "2",
+      "metadata": {
+        "description": "Number of the VMs that going to be monitor - Must be the exact number of the VMs in the same Project"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the virtual machine"
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "vmlocation": {
+      "type": "string",
+      "defaultValue": "germanywestcentral",
+      "metadata": {
+        "description": "Location for all resources related to VMs."
+      }
+    },
+    "monitoringWorkspaceName": {
+      "type": "string",
+      "defaultValue": "DFP-monitoring",
+      "metadata": {
+        "description": "Name of the Log Analytics workspace"
+      }
+    }
+  },
+  "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "lbName": "[format('{0}-lb', parameters('projectName'))]",
+    "lbSkuName": "Standard",
+    "lbPublicIpAddressName": "[format('{0}-lbPublicIP', parameters('projectName'))]",
+    "lbFrontEndName": "LoadBalancerFrontEnd",
+    "lbBackendPoolName": "LoadBalancerBackEndPool",
+    "lbProbeName": "loadBalancerHealthProbe",
+    "nsgName": "[format('{0}-nsg', parameters('projectName'))]",
+    "vNetWebName": "[format('{0}-web-vnet', parameters('projectName'))]",
+    "vNetPublicWebSubnetName": "BackendSubnet"
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "project_vm_1_networkInterface",
+        "count": "[length(range(0, parameters('vmNumbers')))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}-vm{1}-networkInterface', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]"
+                }
+              ]
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "project_vm_1_Monitoring",
+        "count": "[length(range(0, parameters('vmNumbers')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-03-01",
+      "location": "[parameters('vmlocation')]",
+      "name": "[format('{0}-vm{1}/Monitoring', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Monitor",
+        "type": "AzureMonitorWindowsAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "workspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName')), '2020-08-01').customerId]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName')), '2020-08-01').primarySharedKey]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "project_vm_1_InstallWebServer",
+        "count": "[length(range(0, parameters('vmNumbers')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}-vm{1}/InstallWebServer', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/Hassan-Eid-Hassan/azure-all-in-one/refs/heads/main/iisinstaller.ps1"
+          ],
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File iisinstaller.ps1"
+        }
+      },
+      "dependsOn": [
+        "project_vm_1"
+      ]
+    },
+    {
+      "copy": {
+        "name": "project_vm_1",
+        "count": "[length(range(0, parameters('vmNumbers')))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}-vm{1}', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+      "location": "[parameters('vmlocation')]",
+      "zones": [
+        "[string(add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2019-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "fromImage"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-vm{1}-networkInterface', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1)))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[format('{0}-vm{1}', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true
+          }
+        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]"
+      },
+      "dependsOn": [
+        "project_vm_1_networkInterface"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('lbName')]",
+      "location": "[parameters('vmlocation')]",
+      "sku": {
+        "name": "[variables('lbSkuName')]"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('lbFrontEndName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('lbBackendPoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "myHTTPRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), variables('lbFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]"
+              },
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 15,
+              "protocol": "Tcp",
+              "enableTcpReset": true,
+              "loadDistribution": "Default",
+              "disableOutboundSnat": false,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('lbProbeName'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('lbProbeName')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "outboundRules": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpAddressName'))]"
+      ]
+    }
+  ]
+}

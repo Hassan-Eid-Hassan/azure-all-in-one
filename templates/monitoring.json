@@ -1,0 +1,255 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "14680538243429534307"
+    }
+  },
+  "parameters": {
+    "projectName": {
+      "type": "string",
+      "defaultValue": "DFP",
+      "metadata": {
+        "description": "Specifies a project name that is used for generating resource names."
+      }
+    },
+    "vmNumbers": {
+      "type": "int",
+      "defaultValue": "2",
+      "metadata": {
+        "description": "Number of the VMs that going to be monitor - Must be the exact number of the VMs in the same Project"
+      }
+    },
+    "vmlocation": {
+      "type": "string",
+      "defaultValue": "germanywestcentral",
+      "metadata": {
+        "description": "Location for all resources related to VMs."
+      }
+    },
+    "monitoringWorkspaceName": {
+      "type": "string",
+      "defaultValue": "DFP-monitoring",
+      "metadata": {
+        "description": "Name of the Log Analytics workspace"
+      }
+    },
+    "monitoringRetentionInDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Retention period for the workspace data in days"
+      },
+      "minValue": 7,
+      "maxValue": 730
+    },
+    "monitoringSku": {
+      "type": "string",
+      "defaultValue": "PerGB2018",
+      "allowedValues": [
+        "PerGB2018",
+        "Free",
+        "Standalone"
+      ],
+      "metadata": {
+        "description": "The pricing tier for the Log Analytics workspace"
+      }
+    },
+    "actionGroupName": {
+      "type": "string",
+      "defaultValue": "vmNotifyActionGroup"
+    },
+    "emailAddress": {
+      "type": "string",
+      "defaultValue": "hassaneid339@gmail.com"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('vmlocation')]",
+      "name": "[parameters('monitoringWorkspaceName')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('monitoringSku')]"
+        },
+        "retentionInDays": "[parameters('monitoringRetentionInDays')]"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/dataCollectionRules",
+      "apiVersion": "2021-04-01",
+      "name": "[format('MSVMI-{0}', parameters('monitoringWorkspaceName'))]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "description": "Data collection rule for VM Insights.",
+        "dataSources": {
+          "performanceCounters": [
+            {
+              "name": "VMInsightsPerfCounters",
+              "streams": [
+                "Microsoft-InsightsMetrics"
+              ],
+              "scheduledTransferPeriod": "PT1M",
+              "samplingFrequencyInSeconds": 60,
+              "counterSpecifiers": [
+                "\\VmInsights\\DetailedMetrics"
+              ]
+            }
+          ]
+        },
+        "destinations": {
+          "logAnalytics": [
+            {
+              "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]",
+              "name": "VMInsightsPerf-Logs-Dest"
+            }
+          ]
+        },
+        "dataFlows": [
+          {
+            "streams": [
+              "Microsoft-InsightsMetrics"
+            ],
+            "destinations": [
+              "VMInsightsPerf-Logs-Dest"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "project_vm_1_dataCollectionRuleAssociations",
+        "count": "[length(range(0, parameters('vmNumbers')))]"
+      },
+      "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+      "apiVersion": "2019-11-01-preview",
+      "name": "[format('{0}-vm{1}-VMInsights-Dcr-Association', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+      "location": "[parameters('vmlocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/dataCollectionRules', format('MSVMI-{0}', parameters('monitoringWorkspaceName')))]"
+      ],
+      "properties": {
+        "description": "Association of data collection rule for VM Insights.",
+        "dataCollectionRuleId": "[resourceId('Microsoft.Insights/dataCollectionRules', format('MSVMI-{0}', parameters('monitoringWorkspaceName')))]"
+      },
+      "scope": "[format('Microsoft.Compute/virtualMachines/{0}-vm{1}', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]"
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('vmlocation')]",
+      "name": "[parameters('actionGroupName')]",
+      "properties": {
+        "groupShortName": "NotifyGroup",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "AdminEmail",
+            "emailAddress": "[parameters('emailAddress')]",
+            "status": "Enabled"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "cpuAlerts",
+        "count": "[length(range(0, parameters('vmNumbers')))]"
+      },
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "name": "[format('{0}-vm{1}-CPUAlert', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+      "properties": {
+        "description": "CPU usage alert",
+        "severity": 3,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-vm{1}', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "High CPU Usage",
+              "metricName": "Percentage CPU",
+              "metricNamespace": "Microsoft.Compute/virtualMachines",
+              "operator": "GreaterThan",
+              "threshold": 80,
+              "timeAggregation": "Average",
+              "dimensions": [],
+              "evaluationFrequency": "PT1M",
+              "windowSize": "PT5M"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "memoryAlerts",
+        "count": "[length(range(0, parameters('vmNumbers')))]"
+      },
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "name": "[format('{0}-vm{1}-MemoryAlert', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]",
+      "properties": {
+        "description": "Memory usage alert",
+        "severity": 3,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-vm{1}', parameters('projectName'), add(range(0, parameters('vmNumbers'))[copyIndex()], 1))]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "High Memory Usage",
+              "metricName": "Available Memory Bytes",
+              "metricNamespace": "Microsoft.Compute/virtualMachines",
+              "operator": "LessThan",
+              "threshold": 500,
+              "timeAggregation": "Average",
+              "dimensions": [],
+              "evaluationFrequency": "PT1M",
+              "windowSize": "PT5M"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "14680538243429534307"
+    }
+  },
+  "parameters": {
+    "projectName": {
+      "type": "string",
+      "defaultValue": "DFP",
+      "metadata": {
+        "description": "Specifies a project name that is used for generating resource names."
+      }
+    },
+    "dbServerName": {
+      "type": "string",
+      "defaultValue": "mysql-depi-01",
+      "metadata": {
+        "description": "Server Name for Azure database for MySQL"
+      }
+    },
+    "dbDnsZoneName": {
+      "type": "string",
+      "defaultValue": "mysql-depi-01",
+      "metadata": {
+        "description": "Name for DNS Private Zone"
+      }
+    },
+    "dbDnsZoneFqdn": {
+      "type": "string",
+      "defaultValue": "[format('{0}.private.mysql.database.azure.com', parameters('dbDnsZoneName'))]",
+      "metadata": {
+        "description": "Fully Qualified DNS Private Zone"
+      }
+    },
+    "dbAdministratorLogin": {
+      "type": "string",
+      "defaultValue": "depi01",
+      "minLength": 1,
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "dbAdministratorLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    },
+    "dbSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "Azure database for MySQL sku name "
+      }
+    },
+    "dbAvailabilityZone": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "The availability zone information of the server. (If you don't have a preference, leave this setting blank.)"
+      }
+    },
+    "dbHAEnabled": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "SameZone",
+        "ZoneRedundant"
+      ],
+      "metadata": {
+        "description": "High availability mode for a server: Disabled, SameZone, or ZoneRedundant."
+      }
+    },
+    "dbStandbyAvailabilityZone": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "The availability zone of the standby server."
+      }
+    },
+    "dbStorageSizeGB": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "Azure database for MySQL storage Size "
+      }
+    },
+    "dbStorageIops": {
+      "type": "int",
+      "defaultValue": 1280,
+      "metadata": {
+        "description": "Azure database for MySQL storage Iops"
+      }
+    },
+    "dbSkuTier": {
+      "type": "string",
+      "defaultValue": "Burstable",
+      "allowedValues": [
+        "GeneralPurpose",
+        "MemoryOptimized",
+        "Burstable"
+      ],
+      "metadata": {
+        "description": "Azure database for MySQL pricing tier"
+      }
+    },
+    "mysqlVersion": {
+      "type": "string",
+      "defaultValue": "8.0.21",
+      "allowedValues": [
+        "5.7",
+        "8.0.21"
+      ],
+      "metadata": {
+        "description": "MySQL version"
+      }
+    },
+    "dblocation": {
+      "type": "string",
+      "defaultValue": "northeurope",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "dbBackupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "metadata": {
+        "description": "MySQL Server backup retention days"
+      }
+    },
+    "dbGeoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Geo-Redundant Backup setting"
+      }
+    }
+  },
+  "variables": {
+    "vNetDbName": "[format('{0}-db-vnet', parameters('projectName'))]",
+    "vNetDbSubnetName": "DataBaseSubnet"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('dbDnsZoneFqdn')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('dbDnsZoneFqdn'), variables('vNetDbName'))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('dbDnsZoneFqdn'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), variables('vNetDbSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers",
+      "apiVersion": "2023-12-01-preview",
+      "name": "[parameters('dbServerName')]",
+      "location": "[parameters('dblocation')]",
+      "sku": {
+        "name": "[parameters('dbSkuName')]",
+        "tier": "[parameters('dbSkuTier')]"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('dbAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
+        "storage": {
+          "autoGrow": "Enabled",
+          "iops": "[parameters('dbStorageIops')]",
+          "storageSizeGB": "[parameters('dbStorageSizeGB')]"
+        },
+        "createMode": "Default",
+        "version": "[parameters('mysqlVersion')]",
+        "backup": {
+          "backupRetentionDays": "[parameters('dbBackupRetentionDays')]",
+          "geoRedundantBackup": "[parameters('dbGeoRedundantBackup')]"
+        },
+        "availabilityZone": "[parameters('dbAvailabilityZone')]",
+        "highAvailability": {
+          "mode": "[parameters('dbHAEnabled')]",
+          "standbyAvailabilityZone": "[parameters('dbStandbyAvailabilityZone')]"
+        },
+        "network": {
+          "delegatedSubnetResourceId": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dbDnsZoneFqdn'), variables('vNetDbName')), '2020-06-01').virtualNetwork.id, variables('vNetDbSubnetName'))]",
+          "privateDnsZoneResourceId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('dbDnsZoneFqdn'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('dbDnsZoneFqdn'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dbDnsZoneFqdn'), variables('vNetDbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), variables('vNetDbSubnetName'))]"
+      ]
+    }
+  ]
+}

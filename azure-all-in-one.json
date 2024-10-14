@@ -1,0 +1,1152 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "14680538243429534307"
+    }
+  },
+  "parameters": {
+    "projectName": {
+      "type": "string",
+      "defaultValue": "DFP",
+      "metadata": {
+        "description": "Specifies a project name that is used for generating resource names."
+      }
+    },
+    "sharedKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The shared key used to establish connection between the two VirtualNetworkGateways."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "depi01",
+      "metadata": {
+        "description": "Specifies the virtual machine administrator username."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Specifies the virtual machine administrator password."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "Size of the virtual machine"
+      }
+    },
+    "securityType": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "TrustedLaunch"
+      ],
+      "metadata": {
+        "description": "Security Type of the Virtual Machine."
+      }
+    },
+    "vmlocation": {
+      "type": "string",
+      "defaultValue": "germanywestcentral",
+      "metadata": {
+        "description": "Location for all resources related to VMs."
+      }
+    },
+    "monitoringWorkspaceName": {
+      "type": "string",
+      "defaultValue": "DFP-monitoring",
+      "metadata": {
+        "description": "Name of the Log Analytics workspace"
+      }
+    },
+    "monitoringRetentionInDays": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Retention period for the workspace data in days"
+      },
+      "minValue": 7,
+      "maxValue": 730
+    },
+    "monitoringSku": {
+      "type": "string",
+      "defaultValue": "PerGB2018",
+      "allowedValues": [
+        "PerGB2018",
+        "Free",
+        "Standalone"
+      ],
+      "metadata": {
+        "description": "The pricing tier for the Log Analytics workspace"
+      }
+    },
+    "actionGroupName": {
+      "type": "string",
+      "defaultValue": "vmNotifyActionGroup"
+    },
+    "emailAddress": {
+      "type": "string",
+      "defaultValue": "hassaneid339@gmail.com"
+    },
+    "dbServerName": {
+      "type": "string",
+      "defaultValue": "mysql-depi-01",
+      "metadata": {
+        "description": "Server Name for Azure database for MySQL"
+      }
+    },
+    "dbDnsZoneName": {
+      "type": "string",
+      "defaultValue": "mysql-depi-01",
+      "metadata": {
+        "description": "Name for DNS Private Zone"
+      }
+    },
+    "dbDnsZoneFqdn": {
+      "type": "string",
+      "defaultValue": "[format('{0}.private.mysql.database.azure.com', parameters('dbDnsZoneName'))]",
+      "metadata": {
+        "description": "Fully Qualified DNS Private Zone"
+      }
+    },
+    "dbAdministratorLogin": {
+      "type": "string",
+      "defaultValue": "depi01",
+      "minLength": 1,
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "dbAdministratorLoginPassword": {
+      "type": "securestring",
+      "minLength": 8,
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    },
+    "dbSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "Azure database for MySQL sku name "
+      }
+    },
+    "dbAvailabilityZone": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "The availability zone information of the server. (If you don't have a preference, leave this setting blank.)"
+      }
+    },
+    "dbHAEnabled": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "SameZone",
+        "ZoneRedundant"
+      ],
+      "metadata": {
+        "description": "High availability mode for a server: Disabled, SameZone, or ZoneRedundant."
+      }
+    },
+    "dbStandbyAvailabilityZone": {
+      "type": "string",
+      "defaultValue": "1",
+      "metadata": {
+        "description": "The availability zone of the standby server."
+      }
+    },
+    "dbStorageSizeGB": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "Azure database for MySQL storage Size "
+      }
+    },
+    "dbStorageIops": {
+      "type": "int",
+      "defaultValue": 1280,
+      "metadata": {
+        "description": "Azure database for MySQL storage Iops"
+      }
+    },
+    "dbSkuTier": {
+      "type": "string",
+      "defaultValue": "Burstable",
+      "allowedValues": [
+        "GeneralPurpose",
+        "MemoryOptimized",
+        "Burstable"
+      ],
+      "metadata": {
+        "description": "Azure database for MySQL pricing tier"
+      }
+    },
+    "mysqlVersion": {
+      "type": "string",
+      "defaultValue": "8.0.21",
+      "allowedValues": [
+        "5.7",
+        "8.0.21"
+      ],
+      "metadata": {
+        "description": "MySQL version"
+      }
+    },
+    "dblocation": {
+      "type": "string",
+      "defaultValue": "northeurope",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "dbBackupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "metadata": {
+        "description": "MySQL Server backup retention days"
+      }
+    },
+    "dbGeoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Disabled",
+        "Enabled"
+      ],
+      "metadata": {
+        "description": "Geo-Redundant Backup setting"
+      }
+    }
+  },
+  "variables": {
+    "securityProfileJson": {
+      "uefiSettings": {
+        "secureBootEnabled": true,
+        "vTpmEnabled": true
+      },
+      "securityType": "[parameters('securityType')]"
+    },
+    "lbName": "[format('{0}-lb', parameters('projectName'))]",
+    "lbSkuName": "Standard",
+    "lbPublicIpAddressName": "[format('{0}-lbPublicIP', parameters('projectName'))]",
+    "dbVnetGatewayPublicIpAddressName": "[format('{0}-dbVnetGatewayPublicIP', parameters('projectName'))]",
+    "webVnetGatewayPublicIpAddressName": "[format('{0}-webVnetGatewayPublicIP', parameters('projectName'))]",
+    "lbFrontEndName": "LoadBalancerFrontEnd",
+    "lbBackendPoolName": "LoadBalancerBackEndPool",
+    "lbProbeName": "loadBalancerHealthProbe",
+    "nsgName": "[format('{0}-nsg', parameters('projectName'))]",
+    "vNetWebName": "[format('{0}-web-vnet', parameters('projectName'))]",
+    "vNetDbName": "[format('{0}-db-vnet', parameters('projectName'))]",
+    "vNetWebAddressPrefix": "10.20.0.0/16",
+    "vNetDbAddressPrefix": "10.30.0.0/16",
+    "vNetPublicWebSubnetName": "BackendSubnet",
+    "vNetDbSubnetName": "DataBaseSubnet",
+    "vNetPublicWebSubnetAddressPrefix": "10.20.10.0/24",
+    "vNetDbSubnetAddressPrefix": "10.30.10.0/24",
+    "bastionName": "[format('{0}-bastion', parameters('projectName'))]",
+    "bastionSubnetName": "AzureBastionSubnet",
+    "vNetBastionSubnetAddressPrefix": "10.20.20.0/24",
+    "vmVnetGatewaySubnetAddressPrefix": "10.20.30.0/27",
+    "dbVnetGatewaySubnetAddressPrefix": "10.30.20.0/27",
+    "bastionPublicIPAddressName": "[format('{0}-bastionPublicIP', parameters('projectName'))]",
+    "dbVnetGatewayName": "DepiDbVnetGateway",
+    "webVnetGatewayName": "DepiWebVnetGateway",
+    "connectionDbToWebName": "depiVpnDbToWeb",
+    "connectionWebToDbName": "depiVpnWebToDb",
+    "ddosProtectionPlanName": "depiDdosProtectionPlan"
+    // "natGatewayName": "[format('{0}-natgateway', parameters('projectName'))]",
+    // "natGatewayPublicIPAddressName": "[format('{0}-natPublicIP', parameters('projectName'))]"
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "project_vm_1_networkInterface",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}-vm{1}-networkInterface', parameters('projectName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]"
+                }
+              ]
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "project_vm_1_InstallWebServer",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}-vm{1}/InstallWebServer', parameters('projectName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/Hassan-Eid-Hassan/azure-all-in-one/refs/heads/main/iisinstaller.ps1"
+          ],
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File iisinstaller.ps1"
+        }
+      },
+      "dependsOn": [
+        "project_vm_1"
+      ]
+    },
+    {
+      "copy": {
+        "name": "project_vm_1",
+        "count": "[length(range(1, 2))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2021-11-01",
+      "name": "[format('{0}-vm{1}', parameters('projectName'), range(1, 2)[copyIndex()])]",
+      "location": "[parameters('vmlocation')]",
+      "zones": [
+        "[string(range(1, 2)[copyIndex()])]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2019-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "fromImage"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-vm{1}-networkInterface', parameters('projectName'), range(1, 2)[copyIndex()]))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[format('{0}-vm{1}', parameters('projectName'), range(1, 3)[copyIndex()])]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true
+          }
+        },
+        "securityProfile": "[if(equals(parameters('securityType'), 'TrustedLaunch'), variables('securityProfileJson'), null())]"
+      },
+      "dependsOn": [
+        "project_vm_1_networkInterface"
+      ]
+    },
+    // {
+    //   "type": "Microsoft.Network/natGateways",
+    //   "apiVersion": "2021-05-01",
+    //   "name": "[variables('natGatewayName')]",
+    //   "location": "[parameters('vmlocation')]",
+    //   "sku": {
+    //     "name": "Standard"
+    //   },
+    //   "properties": {
+    //     "idleTimeoutInMinutes": 4,
+    //     "publicIpAddresses": [
+    //       {
+    //         "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayPublicIPAddressName'))]"
+    //       }
+    //     ]
+    //   },
+    //   "dependsOn": [
+    //     "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayPublicIPAddressName'))]"
+    //   ]
+    // },
+    // {
+    //   "type": "Microsoft.Network/publicIPAddresses",
+    //   "apiVersion": "2021-05-01",
+    //   "name": "[variables('natGatewayPublicIPAddressName')]",
+    //   "location": "[parameters('vmlocation')]",
+    //   "sku": {
+    //     "name": "Standard"
+    //   },
+    //   "properties": {
+    //     "publicIPAddressVersion": "IPv4",
+    //     "publicIPAllocationMethod": "Static",
+    //     "idleTimeoutInMinutes": 4
+    //   }
+    // },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetWebName'), variables('bastionSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('vNetBastionSubnetAddressPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetWebName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), 'GatewaySubnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetWebName'), 'GatewaySubnet')]",
+      "properties": {
+        "addressPrefix": "[variables('vmVnetGatewaySubnetAddressPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetWebName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('vNetPublicWebSubnetAddressPrefix')]",
+        // "natGateway": {
+        //   "id": "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]"
+        // },
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        // "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetWebName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/bastionHosts",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('bastionName')]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IpConf",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('bastionSubnetName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('bastionPublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('bastionSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('bastionPublicIPAddressName')]",
+      "location": "[parameters('vmlocation')]",
+      "sku": {
+        "name": "[variables('lbSkuName')]"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "ddosSettings": {
+          "ddosProtectionPlan": {
+            "id": "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+          },
+          "protectionMode": "Enabled"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('lbName')]",
+      "location": "[parameters('vmlocation')]",
+      "sku": {
+        "name": "[variables('lbSkuName')]"
+      },
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('lbFrontEndName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('lbBackendPoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "myHTTPRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', variables('lbName'), variables('lbFrontEndName'))]"
+              },
+              "backendAddressPool": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('lbBackendPoolName'))]"
+              },
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 15,
+              "protocol": "Tcp",
+              "enableTcpReset": true,
+              "loadDistribution": "Default",
+              "disableOutboundSnat": false,
+              "probe": {
+                "id": "[resourceId('Microsoft.Network/loadBalancers/probes', variables('lbName'), variables('lbProbeName'))]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('lbProbeName')]",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "outboundRules": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('lbPublicIpAddressName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('lbPublicIpAddressName')]",
+      "location": "[parameters('vmlocation')]",
+      "sku": {
+        "name": "[variables('lbSkuName')]"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "ddosSettings": {
+          "ddosProtectionPlan": {
+            "id": "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+          },
+          "protectionMode": "Enabled"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowHTTPInbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('vNetWebName')]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetWebAddressPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('vNetDbName')]",
+      "location": "[parameters('dblocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetDbAddressPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', variables('vNetDbName'), variables('vNetDbSubnetName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), 'GatewaySubnet')]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('vNetDbSubnetAddressPrefix')]",
+        "delegations": [
+          {
+            "name": "dlg-Microsoft.DBforMySQL-flexibleServers",
+            "properties": {
+              "serviceName": "Microsoft.DBforMySQL/flexibleServers"
+            }
+          }
+        ],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetDbName'), 'GatewaySubnet')]",
+      "properties": {
+        "addressPrefix": "[variables('dbVnetGatewaySubnetAddressPrefix')]",
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('dbDnsZoneFqdn')]",
+      "location": "global"
+    },
+    {
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('dbDnsZoneFqdn'), variables('vNetDbName'))]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('dbDnsZoneFqdn'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), variables('vNetDbSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.DBforMySQL/flexibleServers",
+      "apiVersion": "2023-12-01-preview",
+      "name": "[parameters('dbServerName')]",
+      "location": "[parameters('dblocation')]",
+      "sku": {
+        "name": "[parameters('dbSkuName')]",
+        "tier": "[parameters('dbSkuTier')]"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('dbAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('dbAdministratorLoginPassword')]",
+        "storage": {
+          "autoGrow": "Enabled",
+          "iops": "[parameters('dbStorageIops')]",
+          "storageSizeGB": "[parameters('dbStorageSizeGB')]"
+        },
+        "createMode": "Default",
+        "version": "[parameters('mysqlVersion')]",
+        "backup": {
+          "backupRetentionDays": "[parameters('dbBackupRetentionDays')]",
+          "geoRedundantBackup": "[parameters('dbGeoRedundantBackup')]"
+        },
+        "availabilityZone": "[parameters('dbAvailabilityZone')]",
+        "highAvailability": {
+          "mode": "[parameters('dbHAEnabled')]",
+          "standbyAvailabilityZone": "[parameters('dbStandbyAvailabilityZone')]"
+        },
+        "network": {
+          "delegatedSubnetResourceId": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dbDnsZoneFqdn'), variables('vNetDbName')), '2020-06-01').virtualNetwork.id, variables('vNetDbSubnetName'))]",
+          "privateDnsZoneResourceId": "[resourceId('Microsoft.Network/privateDnsZones', parameters('dbDnsZoneFqdn'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', parameters('dbDnsZoneFqdn'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dbDnsZoneFqdn'), variables('vNetDbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), variables('vNetDbSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-08-01",
+      "location": "[parameters('vmlocation')]",
+      "name": "[parameters('monitoringWorkspaceName')]",
+      "properties": {
+        "sku": {
+          "name": "[parameters('monitoringSku')]"
+        },
+        "retentionInDays": "[parameters('monitoringRetentionInDays')]"
+      }
+    },
+    {
+      "copy": {
+        "name": "project_vm_1_Monitoring",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-03-01",
+      "location": "[parameters('vmlocation')]",
+      "name": "[format('{0}-vm{1}/Monitoring', parameters('projectName'), add(range(0, 2)[copyIndex()], 1))]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Monitor",
+        "type": "AzureMonitorWindowsAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "workspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName')), '2020-08-01').customerId]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName')), '2020-08-01').primarySharedKey]"
+        }
+      },
+      "dependsOn": [
+        "project_vm_1",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/dataCollectionRules",
+      "apiVersion": "2021-04-01",
+      "name": "[format('MSVMI-{0}', parameters('monitoringWorkspaceName'))]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "description": "Data collection rule for VM Insights.",
+        "dataSources": {
+          "performanceCounters": [
+            {
+              "name": "VMInsightsPerfCounters",
+              "streams": [
+                "Microsoft-InsightsMetrics"
+              ],
+              "scheduledTransferPeriod": "PT1M",
+              "samplingFrequencyInSeconds": 60,
+              "counterSpecifiers": [
+                "\\VmInsights\\DetailedMetrics"
+              ]
+            }
+          ]
+        },
+        "destinations": {
+          "logAnalytics": [
+            {
+              "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]",
+              "name": "VMInsightsPerf-Logs-Dest"
+            }
+          ]
+        },
+        "dataFlows": [
+          {
+            "streams": [
+              "Microsoft-InsightsMetrics"
+            ],
+            "destinations": [
+              "VMInsightsPerf-Logs-Dest"
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "project_vm_1_dataCollectionRuleAssociations",
+        "count": "[length(range(0, 2))]"
+      },
+      "type": "Microsoft.Insights/dataCollectionRuleAssociations",
+      "apiVersion": "2019-11-01-preview",
+      "name": "[format('{0}-vm{1}-VMInsights-Dcr-Association', parameters('projectName'), add(range(0, 2)[copyIndex()], 1))]",
+      "location": "[parameters('vmlocation')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/dataCollectionRules', format('MSVMI-{0}', parameters('monitoringWorkspaceName')))]"
+      ],
+      "properties": {
+        "description": "Association of data collection rule for VM Insights.",
+        "dataCollectionRuleId": "[resourceId('Microsoft.Insights/dataCollectionRules', format('MSVMI-{0}', parameters('monitoringWorkspaceName')))]"
+      },
+      "scope": "[format('Microsoft.Compute/virtualMachines/{0}-vm{1}', parameters('projectName'), range(1, 2)[copyIndex()])]"
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('vmlocation')]",
+      "name": "[parameters('actionGroupName')]",
+      "properties": {
+        "groupShortName": "NotifyGroup",
+        "enabled": true,
+        "emailReceivers": [
+          {
+            "name": "AdminEmail",
+            "emailAddress": "[parameters('emailAddress')]",
+            "status": "Enabled"
+          }
+        ]
+      },
+      "dependsOn": [
+        "project_vm_1",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "cpuAlerts",
+        "count": 2
+      },
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "name": "[format('{0}-vm{1}-CPUAlert', parameters('projectName'), range(1, 2)[copyIndex()])]",
+      "properties": {
+        "description": "CPU usage alert",
+        "severity": 3,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-vm{1}', parameters('projectName'), range(1, 2)[copyIndex()]))]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "High CPU Usage",
+              "metricName": "Percentage CPU",
+              "metricNamespace": "Microsoft.Compute/virtualMachines",
+              "operator": "GreaterThan",
+              "threshold": 80,
+              "timeAggregation": "Average",
+              "dimensions": [],
+              "evaluationFrequency": "PT1M",
+              "windowSize": "PT5M"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "project_vm_1",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('monitoringWorkspaceName'))]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "memoryAlerts",
+        "count": 2
+      },
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "location": "global",
+      "name": "[format('{0}-vm{1}-MemoryAlert', parameters('projectName'), range(1, 2)[copyIndex()])]",
+      "properties": {
+        "description": "Memory usage alert",
+        "severity": 3,
+        "enabled": true,
+        "scopes": [
+          "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-vm{1}', parameters('projectName'), range(1, 2)[copyIndex()]))]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "High Memory Usage",
+              "metricName": "Available Memory Bytes",
+              "metricNamespace": "Microsoft.Compute/virtualMachines",
+              "operator": "LessThan",
+              "threshold": 500,
+              "timeAggregation": "Average",
+              "dimensions": [],
+              "evaluationFrequency": "PT1M",
+              "windowSize": "PT5M"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "project_vm_1",
+        "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-vm{1}', parameters('projectName'), range(1, 2)[copyIndex()]))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('dbVnetGatewayPublicIpAddressName')]",
+      "location": "[parameters('dblocation')]",
+      "sku": {
+        "name": "[variables('lbSkuName')]"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "ddosSettings": {
+          "ddosProtectionPlan": {
+            "id": "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+          },
+          "protectionMode": "Enabled"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('dbVnetGatewayName')]",
+      "location": "[parameters('dblocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "vnetGatewayConfig1",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dbVnetGatewayPublicIpAddressName'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), 'GatewaySubnet')]"
+              }
+            }
+          }
+        ],
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), 'GatewaySubnet')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('dbVnetGatewayPublicIpAddressName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('webVnetGatewayPublicIpAddressName')]",
+      "location": "[parameters('vmlocation')]",
+      "sku": {
+        "name": "[variables('lbSkuName')]"
+      },
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "ddosSettings": {
+          "ddosProtectionPlan": {
+            "id": "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+          },
+          "protectionMode": "Enabled"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/ddosProtectionPlans', variables('ddosProtectionPlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('webVnetGatewayName')]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "vnetGatewayConfig2",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webVnetGatewayPublicIpAddressName'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), 'GatewaySubnet')]"
+              }
+            }
+          }
+        ],
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "enableBgp": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), 'GatewaySubnet')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('webVnetGatewayPublicIpAddressName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/connections",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('connectionDbToWebName')]",
+      "location": "[parameters('dblocation')]",
+      "properties": {
+        "virtualNetworkGateway1": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('dbVnetGatewayName'))]"
+        },
+        "virtualNetworkGateway2": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('webVnetGatewayName'))]"
+        },
+        "connectionType": "Vnet2Vnet",
+        "routingWeight": 3,
+        "sharedKey": "[parameters('sharedKey')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('webVnetGatewayName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('dbVnetGatewayName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/connections",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('connectionWebToDbName')]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "virtualNetworkGateway1": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('webVnetGatewayName'))]"
+        },
+        "virtualNetworkGateway2": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('dbVnetGatewayName'))]"
+        },
+        "connectionType": "Vnet2Vnet",
+        "routingWeight": 3,
+        "sharedKey": "[parameters('sharedKey')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('webVnetGatewayName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworkGateways', variables('dbVnetGatewayName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/ddosProtectionPlans",
+      "apiVersion": "2020-11-01",
+      "name": "[variables('ddosProtectionPlanName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    }
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[variables('lbName')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]"
+    },
+    "location": {
+      "type": "string",
+      "value": "[parameters('dblocation')]"
+    },
+    "dbname": {
+      "type": "string",
+      "value": "[parameters('dbServerName')]"
+    },
+    "dbresourceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.DBforMySQL/flexibleServers', parameters('dbServerName'))]"
+    },
+    "mysqlHostname": {
+      "type": "string",
+      "value": "[format('{0}.{1}', parameters('dbServerName'), parameters('dbDnsZoneFqdn'))]"
+    },
+    "mysqlSubnetId": {
+      "type": "string",
+      "value": "[format('{0}/subnets/{1}', reference(resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', parameters('dbDnsZoneFqdn'), variables('vNetDbName')), '2020-06-01').virtualNetwork.id, variables('vNetDbSubnetName'))]"
+    },
+    "vnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]"
+    },
+    "privateDnsId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/privateDnsZones', parameters('dbDnsZoneFqdn'))]"
+    },
+    "privateDnsName": {
+      "type": "string",
+      "value": "[parameters('dbDnsZoneFqdn')]"
+    }
+  }
+}

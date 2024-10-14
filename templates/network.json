@@ -1,0 +1,192 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.54.24096",
+      "templateHash": "14680538243429534307"
+    }
+  },
+  "parameters": {
+    "projectName": {
+      "type": "string",
+      "defaultValue": "DFP",
+      "metadata": {
+        "description": "Specifies a project name that is used for generating resource names."
+      }
+    },
+    "vmlocation": {
+      "type": "string",
+      "defaultValue": "germanywestcentral",
+      "metadata": {
+        "description": "Location for all resources related to VMs."
+      }
+    },
+    "dblocation": {
+      "type": "string",
+      "defaultValue": "northeurope",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "vNetWebName": "[format('{0}-web-vnet', parameters('projectName'))]",
+    "vNetDbName": "[format('{0}-db-vnet', parameters('projectName'))]",
+    "vNetWebAddressPrefix": "10.20.0.0/16",
+    "vNetDbAddressPrefix": "10.30.0.0/16",
+    "vNetPublicWebSubnetName": "BackendSubnet",
+    "vNetDbSubnetName": "DataBaseSubnet",
+    "vNetPublicWebSubnetAddressPrefix": "10.20.10.0/24",
+    "vNetDbSubnetAddressPrefix": "10.30.10.0/24",
+    "bastionSubnetName": "AzureBastionSubnet",
+    "vNetBastionSubnetAddressPrefix": "10.20.20.0/24",
+    "vmVnetGatewaySubnetAddressPrefix": "10.20.30.0/27",
+    "dbVnetGatewaySubnetAddressPrefix": "10.30.20.0/27"
+    // "natGatewayName": "[format('{0}-natgateway', parameters('projectName'))]",
+    // "natGatewayPublicIPAddressName": "[format('{0}-natPublicIP', parameters('projectName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('vNetWebName')]",
+      "location": "[parameters('vmlocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetWebAddressPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-08-01",
+      "name": "[variables('vNetDbName')]",
+      "location": "[parameters('dblocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetDbAddressPrefix')]"
+          ]
+        },
+        "enableDdosProtection": false
+      }
+    },
+    // {
+    //   "type": "Microsoft.Network/natGateways",
+    //   "apiVersion": "2021-05-01",
+    //   "name": "[variables('natGatewayName')]",
+    //   "location": "[parameters('vmlocation')]",
+    //   "sku": {
+    //     "name": "Standard"
+    //   },
+    //   "properties": {
+    //     "idleTimeoutInMinutes": 4,
+    //     "publicIpAddresses": [
+    //       {
+    //         "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayPublicIPAddressName'))]"
+    //       }
+    //     ]
+    //   },
+    //   "dependsOn": [
+    //     "[resourceId('Microsoft.Network/publicIPAddresses', variables('natGatewayPublicIPAddressName'))]"
+    //   ]
+    // },
+    // {
+    //   "type": "Microsoft.Network/publicIPAddresses",
+    //   "apiVersion": "2021-05-01",
+    //   "name": "[variables('natGatewayPublicIPAddressName')]",
+    //   "location": "[parameters('vmlocation')]",
+    //   "sku": {
+    //     "name": "Standard"
+    //   },
+    //   "properties": {
+    //     "publicIPAddressVersion": "IPv4",
+    //     "publicIPAllocationMethod": "Static",
+    //     "idleTimeoutInMinutes": 4
+    //   }
+    // },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetWebName'), variables('bastionSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('vNetBastionSubnetAddressPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetWebName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), 'GatewaySubnet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetWebName'), 'GatewaySubnet')]",
+      "properties": {
+        "addressPrefix": "[variables('vmVnetGatewaySubnetAddressPrefix')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetWebName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetWebName'), variables('vNetPublicWebSubnetName'))]",
+      "properties": {
+        "addressPrefix": "[variables('vNetPublicWebSubnetAddressPrefix')]",
+        // "natGateway": {
+        //   "id": "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]"
+        // },
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        // "[resourceId('Microsoft.Network/natGateways', variables('natGatewayName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetWebName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-09-01",
+      "name": "[format('{0}/{1}', variables('vNetDbName'), variables('vNetDbSubnetName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetDbName'), 'GatewaySubnet')]"
+      ],
+      "properties": {
+        "addressPrefix": "[variables('vNetDbSubnetAddressPrefix')]",
+        "delegations": [
+          {
+            "name": "dlg-Microsoft.DBforMySQL-flexibleServers",
+            "properties": {
+              "serviceName": "Microsoft.DBforMySQL/flexibleServers"
+            }
+          }
+        ],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2021-08-01",
+      "name": "[format('{0}/{1}', variables('vNetDbName'), 'GatewaySubnet')]",
+      "properties": {
+        "addressPrefix": "[variables('dbVnetGatewaySubnetAddressPrefix')]",
+        "delegations": [],
+        "privateEndpointNetworkPolicies": "Enabled",
+        "privateLinkServiceNetworkPolicies": "Enabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetDbName'))]"
+      ]
+    }
+  ]
+}
