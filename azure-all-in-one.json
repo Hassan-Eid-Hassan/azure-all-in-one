@@ -320,7 +320,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/Hassan-Eid-Hassan/azure-all-in-one/refs/heads/main/iisinstaller.ps1"
+            "https://raw.githubusercontent.com/Hassan-Eid-Hassan/azure-all-in-one/refs/heads/main/scripts/iisinstaller.ps1"
           ],
           "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File iisinstaller.ps1"
         }
