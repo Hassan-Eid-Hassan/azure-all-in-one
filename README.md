@@ -1,6 +1,19 @@
-# Azure All-In-One Solution
+<p align="center">
+    <img width="350" src="https://www.technoidentity.com/wp-content/uploads/2020/11/arm-banner-1024X700-800x547.jpg">
+</p>
+<p align="center">
+    <h1 align="center">Azure All-In-One Solution</h1>
+</p>
+<h3 align="center">
+    <img src="https://img.shields.io/github/license/Hassan-Eid-Hassan/azure-all-in-one?logoColor=white&label=License&color=F44336" alt="License Badge">
+    <img src="https://img.shields.io/github/last-commit/Hassan-Eid-Hassan/azure-all-in-one?style=flat&logo=git&logoColor=white&color=FFFFFF" alt="Last Commit Badge">
+    <img src="https://img.shields.io/github/languages/top/Hassan-Eid-Hassan/azure-all-in-one?style=flat&color=000000" alt="Top Language Badge">
+    <img src="https://img.shields.io/github/languages/count/Hassan-Eid-Hassan/azure-all-in-one?style=flat&color=000000" alt="Language Count Badge">
+</h3>
 
-Welcome to the **Azure All-In-One** repository, which was created as part of the DEPI scholarship program. This project demonstrates a secure, multi-region, high-availability cloud architecture built on Azure, using best practices for networking, security, monitoring, compute, and database management.
+<p align="left">
+   Welcome to the <strong>Azure All-In-One</strong> repository, which was created as part of the DEPI scholarship program. This project demonstrates a secure, multi-region, high-availability cloud architecture built on Azure, using best practices for networking, security, monitoring, compute, and database management.
+</p>
 
 ## Project Overview
 
@@ -47,7 +60,7 @@ Each component is meticulously deployed using Infrastructure-as-Code (IaC) via A
 
 ## Architecture Diagram
 
-![Azure All-In-One Architecture](v1.png)
+![Azure All-In-One Architecture](AZ_Architecture.png)
 
 ### Technologies Used
 - **Azure Virtual Machines**: Hosting the application in Germany West Central.
@@ -71,7 +84,8 @@ Each component is meticulously deployed using Infrastructure-as-Code (IaC) via A
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/Hassan-Eid-Hassan/azure-all-in-one.git
-   cd azure-all-in-one```
+   cd azure-all-in-one
+   ```
 2. **Deploy Infrastructure:**
    Use the provided ARM templates in the `templates/` folder to deploy the infrastructure using Azure CLI:
    ```bash
