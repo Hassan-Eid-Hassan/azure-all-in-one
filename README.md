@@ -1,5 +1,5 @@
 <p align="center">
-    <img width="350" src="https://www.technoidentity.com/wp-content/uploads/2020/11/arm-banner-1024X700-800x547.jpg">
+    <img width="500" src="https://mikhail.io/lab/arm/logo.png">
 </p>
 <p align="center">
     <h1 align="center">Azure All-In-One Solution</h1>
